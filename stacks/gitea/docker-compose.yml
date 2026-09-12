@@ -1,0 +1,40 @@
+version: "3.8"
+
+# Gitea, for self-hosted git — used here to sync an Obsidian vault via the
+# Obsidian Git plugin. Runs on 3001 since Grafana already holds 3000.
+
+networks:
+  gitea:
+    name: gitea
+  proxy:
+    external: true
+    name: proxy
+
+volumes:
+  gitea-data:
+
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    restart: unless-stopped
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__server__DOMAIN=gitea.homelab
+      - GITEA__server__SSH_DOMAIN=gitea.homelab
+      - GITEA__server__ROOT_URL=http://gitea.homelab/
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3001:3000"
+      - "2222:22"   # Gitea's own SSH port for git clones, kept off the host's :22
+    networks:
+      - gitea
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitea.rule=Host(`gitea.homelab`)"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"

@@ -1,0 +1,39 @@
+version: "3.8"
+
+# Portainer (container management UI) + Dozzle (live log viewer).
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+
+volumes:
+  portainer-data:
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.homelab`)"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.homelab`)"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"

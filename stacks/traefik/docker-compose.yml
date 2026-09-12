@@ -1,0 +1,30 @@
+version: "3.8"
+
+# Traefik reverse proxy. Discovers services automatically via Docker labels on
+# containers that share the `proxy` network with it (see the `labels:` blocks
+# already present in the other stacks' compose files).
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"   # dashboard on :8080, fine on a Tailscale-only lab;
+                                 # revisit if this ever needed to be internet-facing
+    ports:
+      - "80:80"
+      - "8080:8080"   # Traefik's own dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy

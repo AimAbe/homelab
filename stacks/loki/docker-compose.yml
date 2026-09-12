@@ -1,0 +1,35 @@
+version: "3.8"
+
+# Loki + Promtail, for log aggregation. Joins the existing `monitoring` network
+# (created in phase 8) so Grafana can reach Loki by service name.
+
+networks:
+  monitoring:
+    external: true
+    name: monitoring
+
+volumes:
+  loki-data:
+
+services:
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    restart: unless-stopped
+    volumes:
+      - loki-data:/loki
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitoring
