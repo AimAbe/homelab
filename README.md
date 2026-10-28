@@ -46,6 +46,14 @@ and rationale. Short version:
    — copy each to the lab machine (e.g. `~/homelab/<name>/`) when you reach that phase.
 4. Hit a snag? Check [`docs/troubleshooting.md`](docs/troubleshooting.md) first.
 
+## Future projects
+
+Not part of the phase plan yet — pick these up after the Compose consolidation stretch.
+
+- **homelab-agent** — a phone-accessible conversational AI agent backed by an MCP
+  server on the lab. Plan: [`docs/future/homelab-agent.md`](docs/future/homelab-agent.md);
+  starter stack: [`stacks/homelab-agent/`](stacks/homelab-agent/).
+
 ## The milestone
 
 Get off your home Wi-Fi (e.g. use a phone hotspot) and load `http://homelab:3000` (or,

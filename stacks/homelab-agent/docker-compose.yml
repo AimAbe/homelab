@@ -1,0 +1,49 @@
+version: "3.8"
+
+# homelab-agent — FUTURE PROJECT, not part of the current phase plan.
+# MCP server that lets a conversational AI agent (phone-accessible) check on and
+# manage the lab. See docs/future/homelab-agent.md before deploying.
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+  agent-internal:
+    internal: true
+
+services:
+  # Least-privilege Docker API: only container list/inspect/logs + restart are allowed,
+  # instead of handing the agent the raw docker.sock.
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: homelab-agent-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      POST: 1
+      ALLOW_RESTARTS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - agent-internal
+
+  homelab-mcp:
+    build: .
+    container_name: homelab-mcp
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    environment:
+      DOCKER_HOST: "tcp://socket-proxy:2375"
+      RESTARTABLE: "jellyfin,code-server"   # explicit allow-list for restart_container
+      DISK_PATHS: "/host,/media"
+    volumes:
+      - /:/host:ro
+      - /mnt/media:/media:ro                # same media mount as stacks/jellyfin
+    networks:
+      - proxy
+      - agent-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homelab-agent.rule=Host(`agent.homelab`)"
+      - "traefik.http.services.homelab-agent.loadbalancer.server.port=8000"
