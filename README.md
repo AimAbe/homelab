@@ -67,6 +67,9 @@ Not part of the phase plan yet — pick these up after the Compose consolidation
 - **homelab-agent** — a phone-accessible conversational AI agent backed by an MCP
   server on the lab. Plan: [`docs/future/homelab-agent.md`](docs/future/homelab-agent.md);
   starter stack: [`stacks/homelab-agent/`](stacks/homelab-agent/).
+- **Kubernetes approach (undecided)** — a laptop sandbox (kind/k3d) now, and/or k3s
+  alongside Compose on the lab later instead of phase 14's stop-everything approach.
+  Options and decision criteria: [`docs/future/kubernetes-options.md`](docs/future/kubernetes-options.md).
 
 ## The milestone
 

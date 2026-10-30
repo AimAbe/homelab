@@ -35,6 +35,9 @@ Notes:
   ready for phase 14 is being able to add or change a service, verify it in Grafana/Loki,
   and back it up — all without looking anything up — and having rebuilt the lab once
   with Ansible (phase 20).
+- During consolidation, also decide how to approach Kubernetes (laptop sandbox,
+  k3s alongside Compose, or phase 14 as written). See
+  `future/kubernetes-options.md`.
 - k3s and the Docker stacks will contend for ports 80/443/3000 on the same machine —
   when you get to phase 14, expect to either stop the Docker stacks that use those ports
   or reassign them. Covered in `phases/14-k3s.md`.
