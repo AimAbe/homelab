@@ -17,6 +17,10 @@ each phase) so it doubles as a record of what's actually running on the machine.
 - A coding/dev environment reachable over SSH
 - Media server (Jellyfin)
 - Remote access to an Obsidian vault
+- Internal DNS + ad blocking (AdGuard Home) and a start page (Homepage)
+- Alerting to my phone (Alertmanager + ntfy) and image update notices (Diun)
+- A searchable document archive (Paperless-ngx)
+- Infrastructure as code (Ansible)
 
 ## Architecture at a glance
 
@@ -34,17 +38,27 @@ and rationale. Short version:
 | Media | Jellyfin |
 | Dev environment | tmux + neovim over SSH, plus code-server |
 | Backups | restic → external USB drive |
+| Internal DNS | AdGuard Home (`*.homelab` on every Tailscale device) |
+| Dashboard | Homepage |
+| Alerting | Prometheus rules → Alertmanager → ntfy (phone), with runbooks |
+| Update notices | Diun → ntfy |
+| Documents | Paperless-ngx |
+| Config management | Ansible (`ansible/`) |
 | Kubernetes | k3s (after a month+ of Compose-only operation) |
 
 ## How to use this repo
 
-1. Work through `docs/phases/` in numeric order — each phase is Goal → Prerequisites →
-   Steps → Verification → Troubleshooting.
+1. Work through `docs/phases/` in the order given by the pacing schedule (phases
+   15–20 were added later, so they come *before* k3s even though they're numbered
+   after it). Each phase is Goal → Prerequisites → Steps → Verification →
+   Troubleshooting.
 2. Follow the suggested cadence in [`docs/pacing-schedule.md`](docs/pacing-schedule.md)
    rather than rushing — especially don't jump to k3s (phase 14) early.
 3. Compose stacks referenced by the phase docs live in `stacks/<name>/docker-compose.yml`
    — copy each to the lab machine (e.g. `~/homelab/<name>/`) when you reach that phase.
 4. Hit a snag? Check [`docs/troubleshooting.md`](docs/troubleshooting.md) first.
+5. An alert fired? [`docs/runbooks.md`](docs/runbooks.md) has one section per alert.
+6. After phase 20, deploy with Ansible (`ansible/`) instead of `scp`.
 
 ## Future projects
 

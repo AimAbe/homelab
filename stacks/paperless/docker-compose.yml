@@ -1,0 +1,71 @@
+version: "3.8"
+
+# Paperless-ngx — scan, OCR, tag and search household documents.
+# Kept lean for a 16 GB laptop: no Tika/Gotenberg (only needed for Office/email
+# files — PDFs and images work without them), one worker.
+# See docs/phases/19-paperless-ngx.md.
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+  paperless:
+    name: paperless
+
+services:
+  broker:
+    image: docker.io/library/redis:7
+    container_name: paperless-redis
+    restart: unless-stopped
+    volumes:
+      - ./redisdata:/data
+    networks:
+      - paperless
+
+  db:
+    # Pinned to a major version on purpose: a Postgres major upgrade needs a
+    # dump/restore, so don't blindly bump this when Diun says there's a new one.
+    image: docker.io/library/postgres:16
+    container_name: paperless-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${PAPERLESS_DB_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - paperless
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - db
+      - broker
+    env_file: .env
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD}
+      PAPERLESS_URL: http://paperless.homelab
+      PAPERLESS_TIME_ZONE: America/New_York
+      PAPERLESS_OCR_LANGUAGE: eng
+      PAPERLESS_TASK_WORKERS: "1"
+      PAPERLESS_THREADS_PER_WORKER: "2"
+      USERMAP_UID: "1000"
+      USERMAP_GID: "1000"
+    volumes:
+      - ./data:/usr/src/paperless/data
+      - ./media:/usr/src/paperless/media
+      - ./export:/usr/src/paperless/export     # document_exporter target — what backups use
+      - ./consume:/usr/src/paperless/consume   # drop files here to import them
+    networks:
+      - paperless
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.paperless.rule=Host(`paperless.homelab`)"
+      - "traefik.http.services.paperless.loadbalancer.server.port=8000"
+      - "traefik.docker.network=proxy"

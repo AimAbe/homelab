@@ -1,0 +1,59 @@
+---
+- name: Update apt cache and upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    upgrade: dist
+
+- name: Install base toolkit
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Install unattended-upgrades
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+
+- name: Enable automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Set unattended-upgrades reboot policy
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/52homelab-reboot
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "{{ unattended_auto_reboot | bool | lower }}";
+      Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended_reboot_time }}";
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ignore lid close (runs headless with the lid shut)
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/logind.conf
+    regexp: "^#?{{ item }}="
+    line: "{{ item }}=ignore"
+  loop:
+    - HandleLidSwitch
+    - HandleLidSwitchDocked
+    - HandleLidSwitchExternalPower
+  notify: Restart logind
+
+- name: Mask sleep and suspend targets
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    masked: true
+  loop:
+    - sleep.target
+    - suspend.target
+    - hibernate.target
+    - hybrid-sleep.target

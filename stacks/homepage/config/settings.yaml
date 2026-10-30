@@ -1,0 +1,18 @@
+title: Homelab
+theme: dark
+color: slate
+headerStyle: clean
+statusStyle: dot
+layout:
+  Monitoring:
+    style: row
+    columns: 4
+  Media:
+    style: row
+    columns: 2
+  Services:
+    style: row
+    columns: 4
+  Infrastructure:
+    style: row
+    columns: 4

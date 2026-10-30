@@ -1,0 +1,36 @@
+version: "3.8"
+
+# AdGuard Home — network-wide ad/tracker blocking plus real internal DNS, so
+# `*.homelab` resolves on every Tailscale device (phone included) without
+# /etc/hosts entries. See docs/phases/15-adguard-home.md.
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+
+services:
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard
+    restart: unless-stopped
+    ports:
+      # DNS is the one thing that has to be published on the host directly —
+      # Traefik only handles HTTP. Note: Docker-published ports bypass UFW, so this
+      # is reachable from the LAN as well as Tailscale. That's fine (and useful) as
+      # long as nothing is port-forwarded on the router — it never is in this plan.
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      # Bind mounts (not named volumes) so scripts/restic-backup.sh picks them up.
+      - ./work:/opt/adguardhome/work
+      - ./conf:/opt/adguardhome/conf
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adguard.rule=Host(`adguard.homelab`)"
+      # The setup wizard and admin UI both listen on 3000 inside the container.
+      # Keep the admin port at 3000 when the wizard asks — it isn't published on
+      # the host, so it doesn't clash with Grafana.
+      - "traefik.http.services.adguard.loadbalancer.server.port=3000"

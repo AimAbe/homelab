@@ -15,6 +15,7 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  alertmanager-data:
 
 services:
   prometheus:
@@ -23,6 +24,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro   # phase 17
       - prometheus-data:/prometheus
     networks:
       - monitoring
@@ -58,6 +60,7 @@ services:
     command:
       - "--path.procfs=/host/proc"
       - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"   # so filesystem metrics (and DiskSpaceLow) see the host's disks
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - monitoring
@@ -72,5 +75,34 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+
+  # --- Phase 17: alerting ---------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./webhook-password:/etc/alertmanager/webhook-password:ro   # git-ignored
+      - alertmanager-data:/alertmanager   # silences + notification log
+    networks:
+      - monitoring
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alertmanager.rule=Host(`alerts.homelab`)"
+      - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
+
+  # Translates Alertmanager webhooks into readable ntfy notifications.
+  alertmanager-ntfy:
+    image: ghcr.io/alexbakker/alertmanager-ntfy:latest
+    container_name: alertmanager-ntfy
+    restart: unless-stopped
+    command: ["--configs", "/config/config.yml,/config/auth.yml"]
+    volumes:
+      - ./alertmanager-ntfy.yml:/config/config.yml:ro
+      - ./alertmanager-ntfy-auth.yml:/config/auth.yml:ro   # git-ignored
     networks:
       - monitoring

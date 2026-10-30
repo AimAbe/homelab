@@ -1,0 +1,27 @@
+---
+# Rebuilds the lab's configuration from this repo. Safe to re-run — every task is
+# idempotent. Always preview first:
+#   ansible-playbook site.yml --check --diff
+# Run a single layer with tags, e.g.:
+#   ansible-playbook site.yml --tags stacks
+#
+# Not automated on purpose (one-time, interactive, or account-bound):
+#   Debian install + BIOS (phases 1-2), SSH key creation (phase 4),
+#   `sudo tailscale up` login (phase 5), restic repo init (phase 10).
+
+- name: Configure the homelab
+  hosts: lab
+  become: true
+  roles:
+    - role: base       # phase 3
+      tags: [base]
+    - role: ssh        # phase 4 (sshd hardening only)
+      tags: [ssh]
+    - role: tailscale  # phase 5 (package only)
+      tags: [tailscale]
+    - role: firewall   # phase 6
+      tags: [firewall]
+    - role: docker     # phase 7
+      tags: [docker]
+    - role: stacks     # phases 8-19
+      tags: [stacks]

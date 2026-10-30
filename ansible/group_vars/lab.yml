@@ -1,0 +1,58 @@
+---
+# CHANGE to your Debian username on the lab — whatever `ssh homelab` logs in as.
+# (Set explicitly because the playbook runs with sudo, so detected facts say "root".)
+lab_user: aimen
+lab_home: "/home/{{ lab_user }}"
+homelab_dir: "{{ lab_home }}/homelab"
+
+# CHANGE to your real LAN subnet (`ip a` on the lab machine) — same value as phase 6.
+lan_subnet: "192.168.1.0/24"
+
+# Phase 3: allow unattended-upgrades to reboot for kernel updates? Off by default,
+# matching the "decide deliberately" note in phase 3.
+unattended_auto_reboot: false
+unattended_reboot_time: "04:30"
+
+base_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - tmux
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - rsync
+  - python3-debian   # needed by Ansible's deb822_repository module
+
+# Docker networks shared across stacks (phase 8 + 11).
+docker_shared_networks:
+  - proxy
+  - monitoring
+
+# Stacks deployed by the `stacks` role, in order. `dir` is the folder name under
+# ~/homelab (defaults to `name`). `secrets` are files that must already exist on the
+# lab machine — they're never in git, so the playbook checks for them and stops
+# with a clear message instead of starting a half-configured stack.
+# Comment out anything you haven't reached yet in the phase plan.
+homelab_stacks:
+  - name: traefik
+  - name: monitoring
+    secrets: [alertmanager-ntfy-auth.yml, webhook-password]
+  - name: loki
+  - name: ntfy
+  - name: adguard
+  - name: gitea
+  - name: jellyfin
+  - name: portainer-dozzle
+    dir: portainer
+  - name: code-server
+    secrets: [.env]
+  - name: homepage
+    secrets: [.env]
+  - name: diun
+    secrets: [.env]
+  - name: paperless
+    secrets: [.env]

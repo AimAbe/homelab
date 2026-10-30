@@ -23,6 +23,13 @@
 | Media server | Jellyfin | Fully open-source and self-hosted; no account or cloud dependency, unlike Plex, which stays consistent with the Tailscale-only / nothing-exposed approach |
 | Dev environment | tmux + neovim over SSH, plus optional code-server | Terminal workflow matches existing CLI comfort; code-server available behind Traefik when a browser GUI is preferred |
 | Backups | restic → external USB drive | Simple, free, local; accepted as not-offsite for now, with cloud (e.g. Backblaze B2) as a documented future upgrade |
+| Internal DNS | AdGuard Home | Real DNS for `*.homelab` across the tailnet (fixes the phone caveat) plus ad blocking; chosen over Pi-hole for built-in DNS-over-HTTPS upstreams and DNS rewrites in one container |
+| Dashboard | Homepage | YAML-configured, so it lives in git like everything else; live container status via a read-only socket proxy |
+| Alerting | Alertmanager → alertmanager-ntfy → ntfy | Standard Prometheus alerting path; ntfy is self-hosted, no account, works over Tailscale; each alert links to a runbook |
+| Update notices | Diun (over Renovate, for now) | Notify-only keeps updates deliberate; Renovate PRs are the upgrade once Gitea Actions CI exists |
+| Documents | Paperless-ngx | OCR + full-text search for household paperwork; trimmed (no Tika/Gotenberg) for 16 GB RAM |
+| Config management | Ansible | Agentless (just SSH), readable YAML, the most common IaC tool for configuring hosts |
+| Docker API access | docker-socket-proxy for read-mostly tools | Homepage/Diun only get the API calls they need, instead of full root-equivalent access via `docker.sock` |
 
 ## Network / access model
 
@@ -48,9 +55,11 @@
   fallback if Tailscale ever breaks — see `phases/06-firewall.md`.
 - Traefik terminates HTTP for all web UIs and routes by hostname
   (`grafana.homelab`, etc.). Hostname resolution for those is via `/etc/hosts` entries on
-  admin machines (see `phases/11-reverse-proxy-traefik.md`) — there's no internal DNS
-  server yet, so this doesn't extend automatically to the phone. Adding something like
-  Pi-hole for real internal DNS is a good future project, not covered here.
+  admin machines (see `phases/11-reverse-proxy-traefik.md`) until phase 15, when
+  AdGuard Home takes over: a single `*.homelab` DNS rewrite, served to every tailnet
+  device (phone included) via Tailscale's custom nameserver setting.
+- Docker-published ports (Grafana's 3000, AdGuard's 53) bypass UFW. That's acceptable
+  here because nothing is port-forwarded on the router, but it's worth knowing.
 
 ## Directory layout on the lab machine
 
@@ -62,6 +71,12 @@
   traefik/      → stacks/traefik/docker-compose.yml
   jellyfin/     → stacks/jellyfin/docker-compose.yml
   code-server/  → stacks/code-server/docker-compose.yml
+  loki/         → stacks/loki/docker-compose.yml
+  adguard/      → stacks/adguard/docker-compose.yml
+  homepage/     → stacks/homepage/ (compose + config/)
+  ntfy/         → stacks/ntfy/docker-compose.yml
+  diun/         → stacks/diun/docker-compose.yml
+  paperless/    → stacks/paperless/docker-compose.yml
   obsidian/     → vault clone (see phase 09)
 ```
 

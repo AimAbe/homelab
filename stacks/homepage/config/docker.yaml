@@ -1,0 +1,4 @@
+# Read-only container status via the socket proxy in this stack's compose file.
+homelab-docker:
+  host: socket-proxy
+  port: 2375

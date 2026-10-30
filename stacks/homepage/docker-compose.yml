@@ -1,0 +1,47 @@
+version: "3.8"
+
+# Homepage — a start page with links, live container status, host resources and
+# per-service widgets. Config lives in ./config (YAML). See
+# docs/phases/16-homepage.md.
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+  homepage-internal:
+    internal: true
+
+services:
+  # Homepage only needs to *read* container state, so it talks to Docker through
+  # a socket proxy that allows container listing only — mounting docker.sock
+  # directly (even :ro) would give it the full Docker API.
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: homepage-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - homepage-internal
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    env_file: .env   # widget API keys — copy .env.example to .env and fill in
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: home.homelab
+    volumes:
+      - ./config:/app/config
+      - /mnt/media:/mnt/media:ro   # only so the resources widget can show media-drive usage
+    networks:
+      - proxy
+      - homepage-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`home.homelab`)"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"

@@ -1,0 +1,6 @@
+---
+# Restarting sshd keeps existing sessions (including Ansible's own) alive.
+- name: Restart ssh
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: restarted

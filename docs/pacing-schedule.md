@@ -16,17 +16,25 @@ Kubernetes.** Spend real time operating the Compose stack before touching k3s.
 | 9 | Phase 12: Jellyfin behind Traefik | A test video streams remotely over Tailscale |
 | 10 | Phase 13: tmux/neovim workflow + code-server behind Traefik | Comfortable editing lab configs both over plain SSH and in the browser |
 | 11 | Phase 10: Portainer, Dozzle, restic backups to USB, Loki | First successful `restic snapshots` listing; logs visible in Loki/Grafana |
-| 12–15 | **Compose consolidation month(s)** — no new services. Break things on purpose and fix them, practice day-to-day `docker compose` operations, tune Grafana dashboards, read logs via Dozzle/Loki, restore a backup as a drill | Genuinely comfortable operating the whole stack without hand-holding |
-| 16+ | Phase 14: k3s, kubectl, Helm, kube-prometheus-stack | First `kubectl get nodes` over Tailscale |
+| 12 | Phase 15: AdGuard Home | **`grafana.homelab` loads on your phone, off Wi-Fi** — `/etc/hosts` entries deleted |
+| 13 | Phase 17: Alertmanager + ntfy, read through the runbooks | `docker stop jellyfin` buzzes your phone; starting it sends "Resolved" |
+| 14 | Phase 16: Homepage + phase 18: Diun | `home.homelab` pinned to your phone; first Saturday update notification arrives |
+| 15 | Phase 19: Paperless-ngx | A scanned document is searchable, and shows up in `restic ls latest` |
+| 16–19 | **Compose consolidation month(s)** — no new services. Break things on purpose and fix them *using the alerts and runbooks*, practice day-to-day `docker compose` operations, do the weekly Diun update routine, tune Grafana dashboards and alert thresholds, restore a backup as a drill. **Capstone: phase 20 — codify it all in Ansible, then do the rebuild drill** | Playbook second run reports `changed=0`; lab rebuilt from scratch with Ansible + restic |
+| 20+ | Phase 14: k3s, kubectl, Helm, kube-prometheus-stack | First `kubectl get nodes` over Tailscale |
 
 Notes:
 
 - Weekends 8–10 (Traefik, Jellyfin, dev environment) are new additions versus the
   original plan — they exist specifically to give more Docker Compose reps before the
   "consolidation month," since more comfort with Compose was an explicit goal.
-- The consolidation stretch (12–15) is intentionally open-ended. A good signal you're
+- Weekends 12–15 (AdGuard, alerting, Homepage/Diun, Paperless) were added later as
+  phases 15–19. AdGuard comes first because everything after it uses `*.homelab` on
+  the phone; alerting comes next because every service after it is then monitored.
+- The consolidation stretch (16–19) is intentionally open-ended. A good signal you're
   ready for phase 14 is being able to add or change a service, verify it in Grafana/Loki,
-  and back it up — all without looking anything up.
+  and back it up — all without looking anything up — and having rebuilt the lab once
+  with Ansible (phase 20).
 - k3s and the Docker stacks will contend for ports 80/443/3000 on the same machine —
   when you get to phase 14, expect to either stop the Docker stacks that use those ports
   or reassign them. Covered in `phases/14-k3s.md`.

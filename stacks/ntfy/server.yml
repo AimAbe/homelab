@@ -1,0 +1,20 @@
+# ntfy server config — mounted at /etc/ntfy/server.yml.
+
+base-url: "http://ntfy.homelab"
+listen-http: ":80"
+behind-proxy: true
+
+cache-file: "/var/cache/ntfy/cache.db"
+cache-duration: "24h"
+
+# Locked down by default: nothing can read or publish without a user/token.
+# Users and tokens are created with `docker exec ntfy ntfy user|access|token ...`
+# — see phase 17.
+auth-file: "/var/lib/ntfy/user.db"
+auth-default-access: "deny-all"
+
+# iPhone only: iOS can't hold a background connection to a self-hosted server, so
+# ntfy relays a content-free "poll now" nudge through ntfy.sh, and the app then
+# fetches the actual message from this server over Tailscale. Android doesn't
+# need this. Uncomment if you use the iOS app.
+# upstream-base-url: "https://ntfy.sh"

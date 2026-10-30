@@ -1,0 +1,34 @@
+---
+# Mirrors phase 6. Rules are added before UFW is enabled so a first run can't
+# lock you out — but check `lan_subnet` in group_vars/lab.yml before running.
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Default deny incoming
+  community.general.ufw:
+    direction: incoming
+    default: deny
+
+- name: Default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    default: allow
+
+- name: Trust the Tailscale interface
+  community.general.ufw:
+    rule: allow
+    direction: in
+    interface: tailscale0
+
+- name: Allow SSH from the LAN as a fallback
+  community.general.ufw:
+    rule: allow
+    from_ip: "{{ lan_subnet }}"
+    to_port: "22"
+    proto: tcp
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled

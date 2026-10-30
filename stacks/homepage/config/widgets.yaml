@@ -1,0 +1,19 @@
+- resources:
+    label: T480
+    cpu: true
+    memory: true
+    cputemp: true
+    uptime: true
+    disk:
+      - /
+      - /mnt/media
+
+- datetime:
+    text_size: md
+    format:
+      timeStyle: short
+      dateStyle: medium
+
+- search:
+    provider: duckduckgo
+    target: _blank

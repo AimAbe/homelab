@@ -1,0 +1,53 @@
+version: "3.8"
+
+# Diun (Docker Image Update Notifier) — checks weekly whether any running
+# container's image has a newer version, and sends the list to ntfy. It only
+# *notifies*; updating stays a deliberate `docker compose pull && up -d`.
+# See docs/phases/18-diun.md.
+
+networks:
+  monitoring:
+    external: true
+    name: monitoring   # to reach ntfy at http://ntfy
+  diun-internal:
+    internal: true
+
+services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: diun-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - diun-internal
+
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    command: serve
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    env_file: .env   # NTFY_TOKEN — copy .env.example to .env
+    environment:
+      TZ: America/New_York
+      LOG_LEVEL: info
+      DIUN_WATCH_WORKERS: "10"
+      DIUN_WATCH_SCHEDULE: "0 9 * * 6"   # Saturdays 09:00 — right before lab time
+      DIUN_WATCH_JITTER: "30s"
+      DIUN_WATCH_FIRSTCHECKNOTIF: "false"   # don't spam on the very first scan
+      DIUN_PROVIDERS_DOCKER: "true"
+      DIUN_PROVIDERS_DOCKER_ENDPOINT: "tcp://socket-proxy:2375"
+      DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT: "true"
+      DIUN_NOTIF_NTFY_ENDPOINT: "http://ntfy"
+      DIUN_NOTIF_NTFY_TOPIC: "homelab-updates"
+      DIUN_NOTIF_NTFY_TOKEN: "${NTFY_TOKEN}"
+    volumes:
+      - ./data:/data
+    networks:
+      - diun-internal
+      - monitoring

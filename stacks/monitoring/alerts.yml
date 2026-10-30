@@ -1,0 +1,98 @@
+# Prometheus alerting rules. Each alert links to its runbook section, which the
+# ntfy notification opens when tapped.
+
+groups:
+  - name: homelab-host
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} scrape target is down"
+          description: "Prometheus hasn't been able to scrape {{ $labels.instance }} ({{ $labels.job }}) for 2+ minutes."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#targetdown"
+
+      - alert: DiskSpaceLow
+        expr: |
+          node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk {{ $labels.mountpoint }} below 15% free"
+          description: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#diskspacelow"
+
+      - alert: DiskSpaceCritical
+        expr: |
+          node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk {{ $labels.mountpoint }} below 5% free"
+          description: "{{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free. Services will start failing writes soon."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#diskspacelow"
+
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Memory usage has been {{ $value | humanizePercentage }} for 10+ minutes."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#highmemoryusage"
+
+      - alert: HighCpuUsage
+        expr: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 90% for 15 minutes"
+          description: "Average CPU usage is {{ $value | humanizePercentage }}."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#highcpuusage"
+
+      # A lid-closed laptop is more prone to heat than a server — worth watching.
+      - alert: HighTemperature
+        expr: max(node_hwmon_temp_celsius) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "T480 running hot ({{ $value }}°C)"
+          description: "Highest hardware temperature sensor has been above 85°C for 5+ minutes."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#hightemperature"
+
+  - name: homelab-containers
+    rules:
+      # cAdvisor only reports running containers, so a stopped container's series
+      # simply disappears — absent() catches that. One clause per container worth
+      # paging on; add more as you decide what you actually care about.
+      - alert: CriticalContainerMissing
+        expr: |
+          absent(container_last_seen{name="traefik"})
+          or absent(container_last_seen{name="adguard"})
+          or absent(container_last_seen{name="jellyfin"})
+          or absent(container_last_seen{name="ntfy"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.name }} is not running"
+          description: "cAdvisor hasn't reported {{ $labels.name }} for 2+ minutes."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#criticalcontainermissing"
+
+      - alert: ContainerRestarting
+        expr: changes(container_start_time_seconds{name!=""}[15m]) > 2
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} is restart-looping"
+          description: "{{ $labels.name }} has restarted more than twice in 15 minutes."
+          runbook_url: "https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md#containerrestarting"

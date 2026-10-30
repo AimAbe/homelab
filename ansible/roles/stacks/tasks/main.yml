@@ -1,0 +1,49 @@
+---
+# Copies each stack from this repo's stacks/ to ~/homelab/<dir>/ and brings it up.
+# The repo is the source of truth: edit compose files here, commit, re-run.
+# Secrets (.env, auth files) live only on the lab machine and are never touched.
+
+- name: Create shared Docker networks
+  community.docker.docker_network:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ docker_shared_networks }}"
+
+- name: Check required secret files exist on the lab machine
+  ansible.builtin.stat:
+    path: "{{ homelab_dir }}/{{ item.0.dir | default(item.0.name) }}/{{ item.1 }}"
+  register: stacks_secret_files
+  loop: "{{ homelab_stacks | subelements('secrets', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item.0.name }}/{{ item.1 }}"
+
+- name: Stop if any secret file is missing
+  ansible.builtin.assert:
+    that: item.stat.exists
+    fail_msg: >-
+      Missing {{ homelab_dir }}/{{ item.item.0.dir | default(item.item.0.name) }}/{{ item.item.1 }} — create it from the matching
+      *.example file in the repo (see that stack's phase doc), then re-run.
+    quiet: true
+  loop: "{{ stacks_secret_files.results }}"
+  loop_control:
+    label: "{{ item.item.0.name }}/{{ item.item.1 }}"
+
+- name: Copy stack files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../stacks/{{ item.name }}/"
+    dest: "{{ homelab_dir }}/{{ item.dir | default(item.name) }}/"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: preserve
+  loop: "{{ homelab_stacks }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Bring stacks up
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_dir }}/{{ item.dir | default(item.name) }}"
+    state: present
+    remove_orphans: true
+  loop: "{{ homelab_stacks }}"
+  loop_control:
+    label: "{{ item.name }}"

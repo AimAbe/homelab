@@ -1,0 +1,10 @@
+- Lab:
+    - homelab repo:
+        - abbr: GH
+          href: https://github.com/AimAbe/homelab
+    - Runbooks:
+        - abbr: RB
+          href: https://github.com/AimAbe/homelab/blob/main/docs/runbooks.md
+    - Tailscale admin:
+        - abbr: TS
+          href: https://login.tailscale.com/admin/machines

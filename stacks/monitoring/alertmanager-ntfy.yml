@@ -1,0 +1,28 @@
+# alertmanager-ntfy bridge config (no secrets — those go in
+# alertmanager-ntfy-auth.yml, which is merged on top and git-ignored).
+# Reference: https://github.com/alexbakker/alertmanager-ntfy
+
+http:
+  addr: :8000
+
+ntfy:
+  baseurl: http://ntfy   # ntfy container on the shared `monitoring` network
+  notification:
+    topic: homelab-alerts
+    priority: |
+      status == "firing" ? "high" : "default"
+    tags:
+      - tag: "+1"
+        condition: status == "resolved"
+      - tag: rotating_light
+        condition: status == "firing"
+    templates:
+      title: |
+        {{ if eq .Status "resolved" }}Resolved: {{ end }}{{ index .Annotations "summary" }}
+      description: |
+        {{ index .Annotations "description" }}
+      headers:
+        # Tapping the notification opens the runbook for that alert.
+        X-Click: |
+          {{ index .Annotations "runbook_url" }}
+  async: false

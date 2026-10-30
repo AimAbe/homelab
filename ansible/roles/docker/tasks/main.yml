@@ -1,0 +1,33 @@
+---
+# Mirrors phase 7: Docker CE from Docker's own repo, not Debian's package.
+- name: Add Docker apt repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: [deb]
+    uris: https://download.docker.com/linux/debian
+    suites: ["{{ ansible_distribution_release }}"]
+    components: [stable]
+    signed_by: https://download.docker.com/linux/debian/gpg
+
+- name: Install Docker Engine and Compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Enable Docker
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Add lab user to the docker group
+  ansible.builtin.user:
+    name: "{{ lab_user }}"
+    groups: docker
+    append: true

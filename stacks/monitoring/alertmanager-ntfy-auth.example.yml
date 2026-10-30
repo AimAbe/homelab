@@ -1,0 +1,10 @@
+# Copy to alertmanager-ntfy-auth.yml on the lab machine (git-ignored) and fill in.
+
+http:
+  auth:
+    username: alertmanager
+    password: "CHANGE-ME"   # same value as the ./webhook-password file
+
+ntfy:
+  auth:
+    token: "tk_CHANGE-ME"   # from: docker exec ntfy ntfy token add bot

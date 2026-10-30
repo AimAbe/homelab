@@ -1,0 +1,27 @@
+# Alertmanager: groups, de-duplicates and routes Prometheus alerts. Everything goes
+# to ntfy via the alertmanager-ntfy bridge (Alertmanager has no native ntfy
+# receiver, and ntfy would otherwise show the raw webhook JSON).
+
+route:
+  receiver: ntfy
+  group_by: ["alertname", "instance"]
+  group_wait: 30s        # wait to batch alerts that fire together
+  group_interval: 5m     # min time before notifying about new alerts in a group
+  repeat_interval: 4h    # re-notify while still firing
+
+receivers:
+  - name: ntfy
+    webhook_configs:
+      - url: "http://alertmanager-ntfy:8000/hook"
+        send_resolved: true
+        http_config:
+          basic_auth:
+            username: alertmanager
+            # Must match http.auth.password in alertmanager-ntfy-auth.yml.
+            password_file: /etc/alertmanager/webhook-password
+
+# Don't send a warning if the matching critical alert is already firing.
+inhibit_rules:
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: ["alertname", "instance"]

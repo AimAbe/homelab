@@ -1,0 +1,20 @@
+# Secrets — only the *.example versions are committed.
+.env
+**/.env
+stacks/monitoring/alertmanager-ntfy-auth.yml
+stacks/monitoring/webhook-password
+
+# Runtime data that may end up next to a stack if you test locally.
+stacks/*/data/
+stacks/*/cache/
+stacks/*/work/
+stacks/*/conf/
+stacks/paperless/media/
+stacks/paperless/export/
+stacks/paperless/consume/
+stacks/paperless/pgdata/
+stacks/paperless/redisdata/
+
+# Ansible
+ansible/*.retry
+ansible/.vault-password

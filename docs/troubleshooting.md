@@ -14,6 +14,10 @@
 | `restic backup` fails with "repository already locked" | A previous run crashed or is still running | `restic unlock` (only after confirming no other backup is genuinely in progress). |
 | Jellyfin transcoding is slow / video stutters | UHD 620 hardware transcoding not enabled, or too many concurrent streams | Enable QuickSync in Jellyfin's playback settings; keep expectations modest — this is a laptop iGPU, not a NAS with a dedicated transcode chip. |
 | Unattended-upgrades rebooted the box unexpectedly | Automatic reboot enabled for kernel updates | Check `/etc/apt/apt.conf.d/50unattended-upgrades` — either accept scheduled reboots or set a fixed reboot time you're prepared for. |
+| `*.homelab` stops resolving everywhere, or all DNS fails on tailnet devices | AdGuard container down (phase 15 routes all tailnet DNS through it) | `docker ps --filter name=adguard`; `cd ~/homelab/adguard && docker compose up -d`. Short-term: turn Tailscale off on the device. See `runbooks.md#criticalcontainermissing`. |
+| A port is reachable from the LAN even though UFW doesn't allow it | Docker-published ports (`ports:` in compose) bypass UFW's rules | Expected (Grafana 3000, AdGuard 53). Don't publish anything you wouldn't want on the LAN; route web UIs through Traefik instead. |
+| Alerts show in Alertmanager but never reach the phone | Bridge auth/token mismatch, or phone app background limits | `docker logs alertmanager-ntfy`; see phase 17 troubleshooting. |
+| Ansible run changes things on every run | A task isn't idempotent, or something keeps drifting by hand | `--check --diff` shows exactly what; fix the task or stop the manual change. |
 
 If something isn't covered here, check the specific phase doc's own "Troubleshooting"
 section first — this table is for cross-cutting issues, not phase-specific detail.
