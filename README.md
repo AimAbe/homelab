@@ -70,6 +70,10 @@ Not part of the phase plan yet — pick these up after the Compose consolidation
 - **Kubernetes approach (undecided)** — a laptop sandbox (kind/k3d) now, and/or k3s
   alongside Compose on the lab later instead of phase 14's stop-everything approach.
   Options and decision criteria: [`docs/future/kubernetes-options.md`](docs/future/kubernetes-options.md).
+- **Observability lakehouse on Databricks** — export Prometheus metrics and Loki logs
+  to Databricks Free Edition, process them bronze → silver → gold, and deploy the
+  pipeline, dashboard and alerts from GitHub Actions. Plan:
+  [`docs/future/databricks-lakehouse.md`](docs/future/databricks-lakehouse.md).
 
 ## The milestone
 
