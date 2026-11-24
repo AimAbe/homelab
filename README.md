@@ -21,6 +21,7 @@ each phase) so it doubles as a record of what's actually running on the machine.
 - Alerting to my phone (Alertmanager + ntfy) and image update notices (Diun)
 - A searchable document archive (Paperless-ngx)
 - Infrastructure as code (Ansible)
+- Oracle 19c DBA practice in a KVM virtual machine (phase 21, done early — see below)
 
 ## Architecture at a glance
 
@@ -44,13 +45,14 @@ and rationale. Short version:
 | Update notices | Diun → ntfy |
 | Documents | Paperless-ngx |
 | Config management | Ansible (`ansible/`) |
+| Oracle DBA lab | Oracle Database 19c on an Oracle Linux 8 KVM VM |
 | Kubernetes | k3s (after a month+ of Compose-only operation) |
 
 ## How to use this repo
 
 1. Work through `docs/phases/` in the order given by the pacing schedule (phases
    15–20 were added later, so they come *before* k3s even though they're numbered
-   after it). Each phase is Goal → Prerequisites → Steps → Verification →
+   after it; phase 21, the Oracle 19c lab, comes right after phase 7). Each phase is Goal → Prerequisites → Steps → Verification →
    Troubleshooting.
 2. Follow the suggested cadence in [`docs/pacing-schedule.md`](docs/pacing-schedule.md)
    rather than rushing — especially don't jump to k3s (phase 14) early.
