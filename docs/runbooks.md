@@ -130,3 +130,52 @@ answer, usually a bad config, a missing `.env` value, a full disk, or a dependen
 roll back by pinning the previous image tag in the compose file.
 
 **Afterwards:** if an update caused it, write that down in the Diun routine notes.
+
+---
+
+## OracleDown
+
+From the phase 21 Oracle lab (`stacks/oracle-monitoring/alerts.yml` until phase 8
+absorbs it).
+
+**Means:** the exporter can't query the Oracle database. Either the database, the VM,
+the listener or the exporter is down.
+
+**Check:**
+1. Is the VM running? `virsh list --all` (it doesn't autostart; this fires every time
+   you shut it down after studying — silence it, or stop the stack too)
+2. `ssh ol8`, then `lsnrctl status` — is the PDB's service listed?
+3. As `oracle`: `sqlplus / as sysdba`, then `SELECT open_mode FROM v$database;` and
+   `SHOW PDBS`
+4. `docker logs oracledb-exporter --tail 50` — a login error points at `.env` or the
+   monitoring user
+
+**Fix:** start what's down: `virsh start ol8-oracle`, `lsnrctl start`, `STARTUP`, or
+`ALTER PLUGGABLE DATABASE ALL OPEN`. If the exporter can't log in, check the account
+isn't locked or expired (`DBA_USERS.ACCOUNT_STATUS`).
+
+**Afterwards:** read the alert log for why it went down. Note it in
+`oracle/JOURNAL.md`.
+
+---
+
+## OracleTablespaceFull
+
+**Means:** a tablespace is over 85% used. If it fills, inserts fail with `ORA-01653`
+(or sessions suspend, if resumable is on).
+
+**Check:**
+1. Which tablespace, and is it growing? The tablespace panel in Grafana, or
+   `oracle/sql/` tablespace-usage script
+2. Is autoextend on, and how far can it grow? `DBA_DATA_FILES` (`AUTOEXTENSIBLE`,
+   `MAXBYTES`)
+3. Free space on the VM's filesystem: `df -h` inside `ol8`
+4. If it's `UNDOTBS` or `TEMP`, look for a long-running transaction or a big sort in
+   `V$SESSION` / `V$TRANSACTION` first
+
+**Fix:** add space (`ALTER TABLESPACE ... ADD DATAFILE ... SIZE ... AUTOEXTEND ON`, or
+resize an existing data file), or clean up the data that grew. Only purge the recycle
+bin if you know what's in it.
+
+**Afterwards:** if growth was expected, raise the alert threshold or plan capacity. If
+it wasn't, find out what wrote the data.

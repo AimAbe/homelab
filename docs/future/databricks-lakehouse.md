@@ -1,7 +1,7 @@
 # Future project: observability lakehouse on Databricks
 
 > **Status: planned. Start after the Compose consolidation stretch**
-> (pacing schedule weekends 27–30), once Prometheus, Loki and the alerts are stable.
+> (pacing schedule weekends 25–28), once Prometheus, Loki and the alerts are stable.
 > Full plan with diagram: [Claude doc](https://claude.ai/artifact/GFEPKJJeqyxVfCAHZgGduQ).
 
 Export the lab's own metrics and logs to Databricks Free Edition, process them in a
