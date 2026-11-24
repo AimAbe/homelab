@@ -1,7 +1,7 @@
 # Future decision: how to learn Kubernetes
 
 > **Status: undecided — revisit during the Compose consolidation stretch**
-> (pacing schedule weekends 16–19). Phase 14 (k3s) stays in the plan as-is until then.
+> (pacing schedule weekends 27–30). Phase 14 (k3s) stays in the plan as-is until then.
 
 Kubernetes is a learning goal for this lab. Phase 14 covers the basics, but it's
 scheduled last and assumes stopping the Docker stacks to free ports 80/443/3000. Two
