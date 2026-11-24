@@ -1,7 +1,7 @@
 # Future project: homelab-agent
 
 > **Status: planned, not started.** Pick this up after the Compose consolidation
-> stretch (weekends 27–30) — it builds on Docker, Traefik, Jellyfin and Grafana
+> stretch (weekends 25–28) — it builds on Docker, Traefik, Jellyfin and Grafana
 > already being in place.
 
 ## Goal

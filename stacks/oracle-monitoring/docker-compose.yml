@@ -1,0 +1,51 @@
+# Phase 21, O11 — minimal Oracle monitoring: Oracle's database exporter, Prometheus
+# and Grafana. Copy this directory to ~/homelab/oracle-monitoring/ on the lab machine.
+#
+# Temporary by design: when phase 8 builds the main monitoring stack, move the
+# exporter scrape job and alert rule into it and `docker compose down -v` this one
+# (both use port 3000 for Grafana).
+#
+# Everything uses host networking. The Oracle VM sits on libvirt's NAT network
+# (192.168.122.0/24), which rejects traffic forwarded from Docker's bridge networks,
+# so containers on a bridge can't reach the database. On the host network they can.
+# Prometheus and the exporter listen on 127.0.0.1 only; Grafana listens on 3000, which
+# UFW only allows in over Tailscale.
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+services:
+  oracledb-exporter:
+    # Oracle's exporter (github.com/oracle/oracle-db-appdev-monitoring).
+    # Pin a current tag from container-registry.oracle.com rather than "latest".
+    image: container-registry.oracle.com/database/observability-exporter:latest
+    container_name: oracledb-exporter
+    restart: unless-stopped
+    network_mode: host
+    env_file: .env          # DB_USERNAME, DB_PASSWORD, DB_CONNECT_STRING — see .env.example
+    command: ["--web.listen-address=127.0.0.1:9161"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: oracle-prometheus
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.listen-address=127.0.0.1:9090
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: oracle-grafana
+    restart: unless-stopped
+    network_mode: host      # serves on :3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning:ro

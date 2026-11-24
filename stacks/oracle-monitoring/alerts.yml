@@ -1,0 +1,22 @@
+# Metric names come from the exporter's default metrics. If a name doesn't match,
+# check `curl -s localhost:9161/metrics | grep oracledb_` and adjust.
+groups:
+  - name: oracle
+    rules:
+      - alert: OracleDown
+        expr: oracledb_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Oracle database is not answering the exporter"
+          runbook: "docs/runbooks.md#oracledown"
+
+      - alert: OracleTablespaceFull
+        expr: oracledb_tablespace_used_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tablespace {{ $labels.tablespace }} is {{ $value | printf \"%.0f\" }}% full"
+          runbook: "docs/runbooks.md#oracletablespacefull"
